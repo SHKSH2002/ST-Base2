@@ -18,6 +18,8 @@ import mizdooni.service.RestaurantService;
 import java.util.ArrayList;
 import java.util.Map;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -74,12 +76,15 @@ class RestaurantControllerTest {
         restaurant_list.add(restaurant);
         int page_number = 1;
         PagedList<Restaurant> pagedRestaurants = new PagedList<Restaurant>(restaurant_list, page_number, 3);
-        when(restaurantService.getRestaurants(page_number, filter)).thenReturn(pagedRestaurants);
+        when(restaurantService.getRestaurants(eq(page_number), any(RestaurantSearchFilter.class))).thenReturn(pagedRestaurants);
         mockMvc.perform(get("/restaurants")
-                .param("page", String.valueOf(page_number))
-                .queryParam("filter", filter.toString())).andDo(print())
+                .param("page", String.valueOf(page_number), "filter", filter.toString()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("restaurants listed"));
+                .andExpect(jsonPath("$.message").value("restaurants listed"))
+                .andExpect(jsonPath("$.data.page").value(1)) // Adjust field names as needed
+                .andExpect(jsonPath("$.data.hasNext").value(false))
+                .andExpect(jsonPath("$.data.totalPages").value(1)) // Adjust field names as needed
+                .andExpect(jsonPath("$.data.pageList").isNotEmpty());
     }
 
     @Test
