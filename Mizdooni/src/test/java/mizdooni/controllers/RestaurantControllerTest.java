@@ -1,11 +1,14 @@
 package mizdooni.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import mizdooni.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import mizdooni.service.RestaurantService;
 
 import java.util.Map;
 
@@ -20,6 +23,12 @@ class RestaurantControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @MockBean
+    private RestaurantService restaurantService;
+
+    @MockBean
+    private UserService userService;
 
     @Test
     void testGetRestaurant_Success() throws Exception {
