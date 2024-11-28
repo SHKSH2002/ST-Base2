@@ -17,6 +17,7 @@ import mizdooni.service.RestaurantService;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -95,6 +96,25 @@ class RestaurantControllerTest {
     }
 
     @Test
+    void testGetManagerRestaurants_whenExceptionThrown_shouldReturnBadRequest() throws Exception {
+        int managerId = 1;
+        when(restaurantService.getManagerRestaurants(managerId))
+                .thenThrow(new RuntimeException("Some error"));
+
+        mockMvc.perform(get("/restaurants/manager/{managerId}", managerId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testGetManagerRestaurants() throws Exception {
+        mockMvc.perform(get("/restaurants/manager/{managerId}", 1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("manager restaurants listed"))
+                .andExpect(jsonPath("$.data").isArray());
+    }
+
+    @Test
     void testAddRestaurant_Success() throws Exception {
         Map<String, Object> requestBody = Map.of(
                 "name", "Test Restaurant",
@@ -128,7 +148,7 @@ class RestaurantControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestBody)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("PARAMS_MISSING"));
+                .andExpect(jsonPath("$.message").value("parameters missing"));
     }
 
     @Test
@@ -141,6 +161,8 @@ class RestaurantControllerTest {
 
     @Test
     void testValidateRestaurantName_Taken() throws Exception {
+        String name = "Existing Name";
+        when(restaurantService.restaurantExists(name)).thenReturn(true);
         mockMvc.perform(get("/validate/restaurant-name")
                         .param("data", "Existing Name"))
                 .andExpect(status().isConflict())
@@ -149,25 +171,27 @@ class RestaurantControllerTest {
 
     @Test
     void testGetRestaurantTypes() throws Exception {
-        mockMvc.perform(get("/restaurants/types"))
+        when(restaurantService.getRestaurantTypes()).thenReturn(Set.of("a", "b"));
+        mockMvc.perform(get("/restaurants/types")).andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("restaurant types"))
                 .andExpect(jsonPath("$.data").isArray());
     }
 
     @Test
-    void testGetRestaurantLocations() throws Exception {
+    void testGetRestaurantLocations_Empty() throws Exception {
+        mockMvc.perform(get("/restaurants/locations"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("restaurant locations"))
+                .andExpect(jsonPath("$.data").isEmpty());
+    }
+
+    @Test
+    void testGetRestaurantLocations_NotEmpty() throws Exception {
+        when(restaurantService.getRestaurantLocations()).thenReturn(Map.of("tehran", Set.of("1", "2"), "mash", Set.of("3", "4")));
         mockMvc.perform(get("/restaurants/locations"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("restaurant locations"))
                 .andExpect(jsonPath("$.data").isNotEmpty());
-    }
-
-    @Test
-    void testGetManagerRestaurants() throws Exception {
-        mockMvc.perform(get("/restaurants/manager/{managerId}", 1))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("manager restaurants listed"))
-                .andExpect(jsonPath("$.data").isArray());
     }
 }
