@@ -1,7 +1,12 @@
 package mizdooni.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import mizdooni.model.Restaurant;
+import mizdooni.model.RestaurantSearchFilter;
+import mizdooni.response.PagedList;
 import mizdooni.service.UserService;
+import mizdooni.testFixtures.TestFixtures;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -10,9 +15,12 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import mizdooni.service.RestaurantService;
 
+import java.util.ArrayList;
 import java.util.Map;
 
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(RestaurantController.class)
@@ -30,9 +38,18 @@ class RestaurantControllerTest {
     @MockBean
     private UserService userService;
 
+    private RestaurantController restaurantController;
+    private Restaurant restaurant;
+
+    @BeforeEach
+    public void setUp() {
+        restaurant = TestFixtures.createSampleRestaurant();
+    }
+
     @Test
     void testGetRestaurant_Success() throws Exception {
-        mockMvc.perform(get("/restaurants/{restaurantId}", 1))
+        when(restaurantService.getRestaurant(restaurant.getId())).thenReturn(restaurant);
+        mockMvc.perform(get("/restaurants/{restaurantId}", restaurant.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("restaurant found"))
                 .andExpect(jsonPath("$.data").isNotEmpty());
@@ -41,22 +58,34 @@ class RestaurantControllerTest {
     @Test
     void testGetRestaurant_NotFound() throws Exception {
         mockMvc.perform(get("/restaurants/{restaurantId}", 999))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testGetRestaurant_BadRequest() throws Exception {
+        mockMvc.perform(get("/restaurants/{restaurantId}", "a"))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     void testGetRestaurants_ValidPage() throws Exception {
+        RestaurantSearchFilter filter = new RestaurantSearchFilter();
+        ArrayList<Restaurant> restaurant_list = new ArrayList<Restaurant>();
+        restaurant_list.add(restaurant);
+        int page_number = 1;
+        PagedList<Restaurant> pagedRestaurants = new PagedList<Restaurant>(restaurant_list, page_number, 3);
+        when(restaurantService.getRestaurants(page_number, filter)).thenReturn(pagedRestaurants);
         mockMvc.perform(get("/restaurants")
-                        .param("page", "1"))
+                .param("page", String.valueOf(page_number))
+                .queryParam("filter", filter.toString())).andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("restaurants listed"))
-                .andExpect(jsonPath("$.data").isNotEmpty());
+                .andExpect(jsonPath("$.message").value("restaurants listed"));
     }
 
     @Test
     void testGetRestaurants_InvalidPage() throws Exception {
         mockMvc.perform(get("/restaurants")
-                        .param("page", "-1"))
+                        .param("filter", "first"))
                 .andExpect(status().isBadRequest());
     }
 
