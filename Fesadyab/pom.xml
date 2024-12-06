@@ -33,6 +33,11 @@
             <version>5.11.3</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.pitest</groupId>
+            <artifactId>pitest-maven</artifactId>
+            <version>1.17.2</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -56,6 +61,19 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <version>1.17.2</version>
+                <configuration>
+                    <targetClasses>
+                        <param>domain*</param>
+                    </targetClasses>
+                    <targetTests>
+                        <param>domain*</param>
+                    </targetTests>
+                </configuration>
             </plugin>
         </plugins>
     </build>
