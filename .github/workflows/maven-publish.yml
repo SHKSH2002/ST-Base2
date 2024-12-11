@@ -26,13 +26,11 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
-        server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
-        settings-path: ${{ github.workspace }} # location for the settings.xml file
 
     - name: Build with Maven
       run: mvn -B package --file Fesadyab/pom.xml
 
     - name: Publish to GitHub Packages Apache Maven
-      run: mvn deploy -DrepositoryId=github -Durl=https://maven.pkg.github.com/SHKSH2002/ST-Base2 -f Fesadyab/pom.xml
+      run: mvn deploy -DrepositoryId=github::default::https://maven.pkg.github.com/SHKSH2002/ST-Base2 -f Fesadyab/pom.xml
       env:
         GITHUB_TOKEN: ${{ github.token }}
