@@ -26,4 +26,4 @@ jobs:
         cache: 'maven'
 
     - name: Build with Maven
-      run: cd Fesasdyab && mvn test -B  -f pom.xml
+      run: cd Fesadyab && mvn test -B  -f pom.xml
